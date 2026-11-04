@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquette de l'IHM — générateur de paroles</title>
+<style>
+:root{
+  --s0:#faf9f5; --s1:#f1efe8; --s2:#ffffff;
+  --tp:#191917; --ts:#5f5e5a; --tm:#888780;
+  --bd:rgba(25,25,23,.10); --bds:rgba(25,25,23,.18);
+  --acc-bg:#e6f1fb; --acc-tx:#0c447c; --acc-bd:#85b7eb; --acc-fill:#378add;
+  --ok-bg:#eaf3de; --ok-tx:#3b6d11;
+  --no-tx:#a32d2d;
+  --wa-bg:#faeeda; --wa-tx:#854f0b;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+:root{
+  --s0:#1a1a18; --s1:#242422; --s2:#2c2c2a;
+  --tp:#f1efe8; --ts:#b4b2a9; --tm:#888780;
+  --bd:rgba(241,239,232,.12); --bds:rgba(241,239,232,.22);
+  --acc-bg:#0c447c; --acc-tx:#b5d4f4; --acc-bd:#185fa5; --acc-fill:#378add;
+  --ok-bg:#27500a; --ok-tx:#c0dd97;
+  --no-tx:#f09595;
+  --wa-bg:#633806; --wa-tx:#fac775;
+}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--s0);color:var(--tp);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:40px 20px 72px}
+h1{font-size:24px;font-weight:500;line-height:1.3;margin:0 0 12px}
+h2{font-size:15px;font-weight:500;margin:0}
+p{color:var(--ts);margin:0 0 14px}
+p strong{color:var(--tp);font-weight:500}
+code{font-family:var(--mono);font-size:.9em}
+.lede{font-size:16px}
+.note{background:var(--s1);border-radius:8px;padding:12px 16px;font-size:13px;color:var(--ts);margin:0 0 32px}
+.card{background:var(--s2);border:.5px solid var(--bd);border-radius:12px;overflow:hidden;margin:0 0 14px}
+.head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:.5px solid var(--bd);background:var(--s1)}
+.num{font-size:11px;font-weight:500;background:var(--acc-bg);color:var(--acc-tx);padding:2px 8px;border-radius:8px}
+.hint{font-size:12px;color:var(--tm);margin-left:auto}
+.body{padding:14px}
+.cap{font-size:13px;color:var(--ts);margin:0 0 28px}
+label{display:block;font-size:12px;color:var(--ts);margin-bottom:4px}
+input[type=text],textarea,select{width:100%;font:inherit;font-size:13px;color:var(--tp);
+  background:var(--s2);border:.5px solid var(--bds);border-radius:8px;padding:8px 10px}
+textarea{line-height:1.6;resize:vertical}
+button{font:inherit;font-size:12px;color:var(--tp);background:transparent;
+  border:.5px solid var(--bds);border-radius:8px;padding:5px 12px;cursor:pointer}
+button:hover{background:var(--s1)}
+button.on{background:var(--acc-bg);color:var(--acc-tx);border-color:var(--acc-bd)}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--bds);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--acc-fill);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radius:50%;background:var(--acc-fill);cursor:pointer}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.chip{font-size:12px;background:var(--s1);border:.5px solid var(--bd);border-radius:8px;padding:3px 9px}
+.chip b{color:var(--tm);font-weight:400;margin-left:4px}
+.box{border:.5px solid var(--bd);border-radius:8px;padding:10px}
+.fam{font-size:12px;line-height:2}
+.fam span{padding:1px 7px}
+.lock{background:var(--ok-bg);color:var(--ok-tx);border-radius:8px}
+.cut{color:var(--tm);text-decoration:line-through}
+.two{font-style:italic}
+.legend{margin-top:10px;font-size:11px;color:var(--tm);display:flex;gap:16px;flex-wrap:wrap}
+.swatch{display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--ok-bg);border:.5px solid var(--ok-tx)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px;margin-bottom:12px}
+.metric{background:var(--s1);border-radius:8px;padding:8px 10px}
+.metric div:first-child{font-size:11px;color:var(--ts)}
+.metric div:last-child{font-size:20px;font-weight:500}
+.bar{height:5px;background:var(--s1);border-radius:3px;overflow:hidden;margin-bottom:12px}
+.bar i{display:block;width:65%;height:100%;background:var(--acc-fill)}
+.log{font-family:var(--mono);font-size:12px;line-height:1.75}
+.log .mut{color:var(--ts)}
+.log .no{color:var(--no-tx)}
+.log .ok{color:var(--ok-tx)}
+.log .sub{padding-left:16px;color:var(--ts)}
+.line{display:flex;gap:10px;align-items:baseline;padding:5px 0;border-bottom:.5px solid var(--bd)}
+.line .tx{flex:1;font-size:14px}
+.line .mg{font-family:var(--mono);font-size:11px;color:var(--ts);text-align:right;white-space:nowrap}
+.sel{background:var(--s1)}
+.guess{border-bottom:1.5px dotted var(--wa-tx)}
+.echo{background:var(--acc-bg);border-radius:3px}
+.views{margin-left:auto;display:flex;gap:4px}
+.views button{font-size:11px;padding:3px 9px}
+footer{margin-top:40px;padding-top:20px;border-top:.5px solid var(--bd);font-size:13px;color:var(--tm)}
+footer a{color:var(--acc-tx)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Une fenêtre pour le générateur de paroles</h1>
+<p class="lede">Le générateur écrit du rap guidé par le son : il compte les syllabes de chaque vers, mesure les rimes sur deux axes et refuse une ligne qui ne tient pas. Il n'a pas d'interface — voici la maquette de celle qu'on lui ferait, écran par écran.</p>
+<div class="note"><strong>C'est une maquette, pas l'outil.</strong> Rien n'est branché : les boutons ne font rien, sauf le menu « Profil mesuré » de l'écran&nbsp;1, laissé vivant pour montrer ce qu'il change. Tous les mots, comptes de syllabes, refus et coûts affichés viennent d'un vrai son écrit par l'outil.</div>
+
+<h2>Écran 1 — Le brief</h2>
+<p class="cap">Ce qu'on demande. Rien ici ne coûte d'argent. Choisis « à la main » dans le menu du profil : la fourchette de syllabes, jusque-là imposée par le profil mesuré, redevient un curseur.</p>
+<div class="card">
+  <div class="head"><span class="num">1</span><h2>Le brief</h2><span class="hint">rien n'est dépensé ici</span></div>
+  <div class="body">
+    <label for="suj">Sujet</label>
+    <textarea id="suj" rows="2">Partir du quartier, réussir, et la dette qu'on garde envers ceux restés en bas</textarea>
+
+    <div class="row" style="margin:14px 0 10px">
+      <button>Récit (un fil)</button>
+      <button class="on">Punchline (thèmes)</button>
+      <button style="margin-left:auto">Les faire proposer</button>
+    </div>
+    <div class="row" style="margin-bottom:14px">
+      <span class="chip">la dette envers le quartier<b>×</b></span>
+      <span class="chip">le départ<b>×</b></span>
+      <span class="chip">la mère au balcon<b>×</b></span>
+      <span class="chip">les potes restés en bas<b>×</b></span>
+      <span class="chip">l'argent qui change tout<b>×</b></span>
+    </div>
+
+    <div class="grid">
+      <div><label for="prof">Profil mesuré</label>
+        <select id="prof"><option value="gims">gims — 322 textes</option><option value="commun">commun</option><option value="main">à la main</option></select></div>
+      <div><label for="sty">Style dans le profil</label>
+        <select id="sty"><option value="rap">rap</option><option value="chante">chanté</option></select></div>
+    </div>
+
+    <div id="fen" style="margin-top:10px;background:var(--s1);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--ts)">
+      Fourchette imposée par le profil : <strong id="win" style="color:var(--tp);font-weight:500">9 à 15 syllabes</strong> · un vers sur trois à 14 ou plus · une strophe sur deux a une ligne nettement plus courte, au milieu deux fois sur trois
+    </div>
+    <div id="man" style="display:none;align-items:center;gap:10px;margin-top:10px">
+      <span style="font-size:12px;color:var(--ts)">Syllabes</span>
+      <input type="range" min="6" max="18" step="1" value="13" id="syl" style="flex:1">
+      <span id="out" style="font-size:13px;font-weight:500">10 à 13</span>
+    </div>
+
+    <div class="grid" style="margin-top:12px">
+      <div><label>Rimes d'au moins</label><div class="row"><button>2 syll</button><button class="on">3 syll</button></div></div>
+      <div><label for="sch">Schéma</label><select id="sch"><option>varié (tiré)</option><option>AABB</option><option>ABAB</option><option>AAAA</option><option>à la main…</option></select></div>
+      <div><label for="res">Respiration</label><select id="res"><option>une ligne courte de 3 syll</option><option>aucune</option></select></div>
+      <div><label for="frm">Forme</label><select id="frm"><option>chanson (C1, refrain, C2, refrain)</option><option>un bloc de 8 mesures</option></select></div>
+    </div>
+
+    <div style="margin-top:12px;border-top:.5px solid var(--bd);padding-top:10px">
+      <div class="row" style="font-size:13px;color:var(--ts)">La source et les mots interdits
+        <span class="chip" style="background:var(--wa-bg);color:var(--wa-tx);border-color:transparent;margin-left:auto">actif : 1 morceau, 6 mots interdits</span></div>
+      <div class="row" style="font-size:13px;color:var(--ts);margin-top:6px">Avancé — écrivain, effort, candidates, essais
+        <span class="hint">Claude Opus 5.5 · effort medium</span></div>
+    </div>
+
+    <div class="row" style="margin-top:14px">
+      <button class="on" style="font-size:13px;padding:7px 14px">Chercher le plan de rimes</button>
+      <span class="hint" style="margin-left:0">gratuit, moins d'une seconde</span>
+    </div>
+  </div>
+</div>
+
+<h2 style="margin-top:32px">Écran 2 — Le plan de rimes, avant de payer</h2>
+<p class="cap">L'outil choisit les familles de mots qui riment et la fin de chaque vers <em>avant</em> d'appeler le modèle, et ça ne coûte rien. Donc ça se montre et ça se corrige : un mot qu'on ne veut pas se barre, une famille entière se retire au sort. Le bouton porte son prix, pas un verbe.</p>
+<div class="card">
+  <div class="head"><span class="num">2</span><h2>Le plan de rimes</h2><span class="hint">corrigeable, et toujours gratuit</span></div>
+  <div class="body">
+    <p style="font-size:12px;margin-bottom:10px">Schéma tiré : <span style="font-family:var(--mono);color:var(--tp)">AABB AABB · ABAB · AABB AABB</span> — 20 mesures, 10 familles, toutes à 3 syllabes</p>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr))">
+      <div class="box">
+        <div class="row" style="margin-bottom:6px"><span style="font-family:var(--mono);font-size:13px;font-weight:500">A</span><span class="hint" style="margin-left:0">mesures 1-2</span><button style="margin-left:auto;padding:2px 8px">retirer</button></div>
+        <div class="fam"><span class="lock">escalier</span><span>nettoyer</span><span>écraser</span><span>balancier</span><span class="cut">judiciaire</span><span class="two">pas crié</span></div>
+      </div>
+      <div class="box">
+        <div class="row" style="margin-bottom:6px"><span style="font-family:var(--mono);font-size:13px;font-weight:500">E</span><span class="hint" style="margin-left:0">mesures 9-11</span><button style="margin-left:auto;padding:2px 8px">retirer</button></div>
+        <div class="fam"><span>consommation</span><span>occasion</span><span>association</span><span>vocation</span><span>location</span><span class="two">non violation</span></div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><span class="swatch"></span> verrouillé par toi</span>
+      <span><span class="cut">barré</span> retiré de la famille</span>
+      <span><span class="two">en italique</span> fin à cheval sur deux mots</span>
+    </div>
+    <div class="row" style="margin-top:12px;border-top:.5px solid var(--bd);padding-top:10px">
+      <input type="text" placeholder="chercher une rime : « balcon »" style="flex:1">
+      <button>Injecter comme semence</button>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="on" style="font-size:13px;padding:7px 14px">Écrire ces 20 mesures — environ 0,45 $, 6 min</button>
+      <button>Retirer tout le schéma</button>
+    </div>
+  </div>
+</div>
+
+<h2 style="margin-top:32px">Écran 3 — L'écriture en direct</h2>
+<p class="cap">Un son entier prend six minutes et coûte autour de 0,45 $. Donc on regarde, et on voit les refus autant que les lignes gardées : c'est ce qui fait comprendre l'outil, et ce qui permet d'arrêter quand ça part mal.</p>
+<div class="card">
+  <div class="head"><span class="num">3</span><h2>L'écriture en direct</h2><button style="margin-left:auto">Arrêter et garder</button></div>
+  <div class="body">
+    <div class="metrics">
+      <div class="metric"><div>mesures</div><div>13 / 20</div></div>
+      <div class="metric"><div>ratées</div><div>0</div></div>
+      <div class="metric"><div>appels</div><div>15</div></div>
+      <div class="metric"><div>dépensé</div><div>0,29 $</div></div>
+      <div class="metric"><div>écoulé</div><div>4:12</div></div>
+    </div>
+    <div class="bar"><i></i></div>
+    <div class="log">
+      <div class="mut">[Refrain] mesure 1A — cible « consommation »</div>
+      <div class="no">× refusé : Mes potes en bas ont des peines qu'on peut pas racheter<div class="sub">ne finit pas sur la famille (9 fins possibles)</div></div>
+      <div class="no">× refusé : J'suis parti d'la tour, ma lettre jamais cachetée<div class="sub">ne finit pas sur la famille (9 fins possibles)</div></div>
+      <div class="ok">✓ gardé : J'rends au bloc c'qu'il m'a prêté : ma voix, ma vocation<div class="sub">13 syll · « vocation » au lieu de « consommation » · 3 syllabes, l'intérieur aussi · 1 essai</div></div>
+      <div class="mut">[Refrain] mesure 2B — cible « saleté » · le modèle écrit…</div>
+    </div>
+  </div>
+</div>
+
+<h2 style="margin-top:32px">Écran 4 — Le texte annoté</h2>
+<p class="cap">Le texte à copier, et dans la marge ce que l'outil a mesuré sur chaque vers. Les mots qu'aucun dictionnaire ne connaît — « raï », « daronne » — sont en pointillé, parce qu'ils sont prononcés par règles et pas sûrs. Clique un vers et tu peux le relancer seul, pour deux centimes au lieu de refaire le son.</p>
+<div class="card">
+  <div class="head"><span class="num">4</span><h2>Le texte annoté</h2>
+    <div class="views"><button>nu</button><button class="on">annoté</button><button>phonétique</button><button>rapport</button></div></div>
+  <div class="body">
+    <p style="font-size:12px;margin-bottom:8px">[Couplet 2]</p>
+    <div class="line"><div class="tx">Ma mère au balcon monte l'<span class="guess">raï</span> : « mon fils, viens danser »</div><div class="mg">12-14 syll<br>3 syll · intérieur</div></div>
+    <div class="line"><div class="tx">Mon <span class="echo">flow</span>, la cité l'a in<span class="echo">venté</span></div><div class="mg">9-10 syll<br>3 syll · intérieur</div></div>
+    <div class="line sel"><div class="tx">Ceux d'en bas portent la tour, on les croit incapables</div><div class="mg">12-14 syll<br>3 syll · intérieur</div></div>
+    <div class="row sel" style="padding:8px 0 10px">
+      <button>Relancer cette mesure</button><button>Changer de fin…</button><button>Écrire à la main</button>
+      <span class="hint">environ 0,02 $</span>
+    </div>
+    <div class="line"><div class="tx">Ma <span class="guess">daronne</span> au balcon trouve ma vie incroyable</div><div class="mg">12-15 syll<br>3 syll · intérieur</div></div>
+    <div class="legend">
+      <span><span class="guess">pointillé</span> deviné par règles, hors dictionnaire</span>
+      <span><span class="echo">surligné</span> écho interne : flow / venté</span>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button>Copier le texte nu</button><button>Enregistrer</button><button>Rejouer ce plan avec GPT</button>
+    </div>
+  </div>
+</div>
+
+<footer>Quatre autres écrans sont prévus et pas encore maquettés : l'atelier qui juge une ligne qu'on écrit soi-même, l'explorateur des 125 733 formes du lexique, la séance d'écoute qui règle l'outil à l'oreille, et les profils mesurés par artiste.</footer>
+
+</div>
+<script>
+(function(){
+  var p=document.getElementById('prof'),s=document.getElementById('sty'),
+      f=document.getElementById('fen'),m=document.getElementById('man'),
+      w=document.getElementById('win'),r=document.getElementById('syl'),o=document.getElementById('out');
+  var win={rap:'9 à 15 syllabes',chante:'7 à 12 syllabes'};
+  function draw(){
+    if(p.value==='main'){f.style.display='none';m.style.display='flex';}
+    else{m.style.display='none';f.style.display='block';w.textContent=win[s.value];}
+  }
+  function slide(){var h=Math.round(+r.value);o.textContent=(h-3)+' à '+h;}
+  p.addEventListener('change',draw);s.addEventListener('change',draw);
+  r.addEventListener('input',slide);draw();slide();
+})();
+</script>
+</body>
+</html>
